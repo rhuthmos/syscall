@@ -20,9 +20,33 @@ ENTRY(syscall_handler)
 
 # write some code here
 
+push %ecx
+push %edx
+push %ds
+push %es
+push %fs
+push %gs
+
+mov $kernel_seg, %ax
+mov %ax, %ds
+mov %ax, %es
+mov %ax, %gs
+mov %ax, %fs
+
+push %ecx
+push %eax
+
 call syscall_handler_k
 
 # write some code here
+add $8, %esp
+
+pop %gs
+pop %fs
+pop %es
+pop %ds
+pop %edx
+pop %ecx
 
 iret
 ENDPROC(syscall_handler)

@@ -12,6 +12,9 @@
 syscall_u:
 
 #write some code here
+mov 4(%esp), %eax
+mov 8(%esp), %ecx
+
 
 int $15
 
