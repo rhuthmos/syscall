@@ -27,7 +27,7 @@ push %es
 push %fs
 push %gs
 
-mov $kernel_seg, %ax
+mov $216, %ax
 mov %ax, %ds
 mov %ax, %es
 mov %ax, %gs

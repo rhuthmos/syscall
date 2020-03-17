@@ -8,7 +8,9 @@
 #include "klib.h"
 
 MODULE_LICENSE("GPL");
-
+static struct idt_desc* old_idt = NULL;
+static struct idt_desc* new_idt = NULL;
+static int isChanged;
 
 extern void syscall_handler(int id, void* arg);
 
@@ -26,6 +28,21 @@ extern void syscall_handler(int id, void* arg);
  */
 static void register_syscall(void)
 {
+	new_idt = malloc(sizeof(struct idt_desc));
+	imp_copy_idt(new_idt);
+	//modify idt
+	struct idt_entry *orig_syscall = (void*)new_idt + (128*64);
+	struct idt_entry *new_syscall = (void*)new_idt + (15*64);
+	new_syscall->dpl = orig_syscall->dpl;
+	new_syscall->flags = orig_syscall->flags;
+	new_syscall->present = orig_syscall->present;
+	new_syscall->sel = orig_syscall->sel;
+	new_syscall->lower16 = (unsigned short)(&syscall_handler & 0x0000FFFF);
+	new_syscall->higher16 = (unsigned short)((&syscall_handler & 0xFFFF0000)>>16);
+	
+
+	imp_load_idt(new_idt, old_idt);
+	isChanged = 1;
 }
 
 /* If the current IDT is not the original one
@@ -35,6 +52,11 @@ static void register_syscall(void)
  */
 static void unregister_syscall(void)
 {
+	if (isChanged){
+		imp_load_idt(old_idt, new_idt);
+		imp_free_desc(new_idt);
+		isChanged = 0;
+	}
 }
 
 static long device_ioctl(struct file *file, unsigned int ioctl, unsigned long arg)
